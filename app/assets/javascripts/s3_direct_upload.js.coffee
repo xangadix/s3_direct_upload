@@ -22,6 +22,7 @@ $.fn.S3Uploader = (options) ->
     remove_failed_progress_bar: false
     progress_bar_target: null
     click_submit_target: null
+    delayed_submit: null
     allow_multiple_files: true
 
   $.extend settings, options
@@ -45,13 +46,16 @@ $.fn.S3Uploader = (options) ->
           if $('#template-upload').length > 0
             data.context = $($.trim(tmpl("template-upload", file)))
             $(data.context).appendTo(settings.progress_bar_target || $uploadForm)
+
           else if !settings.allow_multiple_files
             data.context = settings.progress_bar_target
-          if settings.click_submit_target
+
+          if settings.click_submit_target || settings.delayed_submit
             if settings.allow_multiple_files
               forms_for_submit.push data
             else
               forms_for_submit = [data]
+
           else
             data.submit()
 
@@ -129,7 +133,7 @@ $.fn.S3Uploader = (options) ->
       domain                 = $uploadForm.attr('action')
       content.filepath       = $uploadForm.find('input[name=key]').val().replace('/${filename}', '')
       content.url            = domain + content.filepath + '/' + encodeURIComponent(file.name)
- 
+
     content.filename         = file.name
     content.filesize         = file.size if 'size' of file
     content.lastModifiedDate = file.lastModifiedDate if 'lastModifiedDate' of file
@@ -158,5 +162,8 @@ $.fn.S3Uploader = (options) ->
 
   @additional_data = (new_data) ->
     settings.additional_data = new_data
+
+  @delayed_submit = () ->
+    form.submit() for form in forms_for_submit
 
   @initialize()
